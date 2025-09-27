@@ -19,7 +19,7 @@ function Prepare() {
       setIsRecording(false);
       // Simulate voice input results
       setInterviewDetails({
-        company: 'Tech Corp',
+        company: 'Amazon',
         position: 'Software Engineer',
         interviewType: 'technical',
         experience: 'mid'
@@ -128,32 +128,9 @@ function Prepare() {
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="interviewType">Interview Type</label>
-                <select 
-                  id="interviewType"
-                  value={interviewDetails.interviewType}
-                  onChange={(e) => setInterviewDetails({...interviewDetails, interviewType: e.target.value})}
-                >
-                  <option value="behavioral">Behavioral</option>
-                  <option value="technical">Technical</option>
-                  <option value="case">Case Study</option>
-                  <option value="mixed">Mixed</option>
-                </select>
-              </div>
+              
 
-              <div className="form-group">
-                <label htmlFor="experience">Experience Level</label>
-                <select 
-                  id="experience"
-                  value={interviewDetails.experience}
-                  onChange={(e) => setInterviewDetails({...interviewDetails, experience: e.target.value})}
-                >
-                  <option value="entry">Entry Level (0-2 years)</option>
-                  <option value="mid">Mid Level (3-5 years)</option>
-                  <option value="senior">Senior Level (6+ years)</option>
-                </select>
-              </div>
+              
             </div>
           </div>
         </div>
@@ -171,7 +148,7 @@ function Prepare() {
               </div>
               <h4>Behavioral Questions</h4>
               <p>Practice STAR method responses for common behavioral scenarios</p>
-              <button className="secondary-button">Start Practice</button>
+              <Link to="/behavioral" className="secondary-button">Start Practice</Link>
             </div>
 
             <div className="prep-card card">
@@ -185,30 +162,12 @@ function Prepare() {
               <Link to="/technical" className="secondary-button">Start Practice</Link>
             </div>
 
-            <div className="prep-card card">
-              <div className="prep-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke="currentColor" strokeWidth="2"/>
-                  <polyline points="3.27,6.96 12,12.01 20.73,6.96" stroke="currentColor" strokeWidth="2"/>
-                  <line x1="12" y1="22.08" x2="12" y2="12" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-              </div>
-              <h4>Company Research</h4>
-              <p>Learn about the company culture, values, and recent news</p>
-              <button className="secondary-button">Start Research</button>
-            </div>
+            
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="action-section">
-          <button className="primary-button large-button">
-            Generate Custom Preparation Plan
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
+        
       </div>
     </div>
   );

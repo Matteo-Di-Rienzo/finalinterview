@@ -79,7 +79,7 @@ function Home() {
               Why Choose <em>Us</em>?
             </h2>
             <p className="benefits-subtitle">
-              Everything you need to automate, optimize, and scale
+            University Students are academically prepared but professionally unprepared for the current competitive  job market.  
             </p>
           </div>
 
@@ -91,8 +91,8 @@ function Home() {
                   <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <h3>Real-Time Intelligence</h3>
-              <p>Access accurate, real-time data to drive smarter decisions</p>
+              <h3>Behavioural mastery, not guesswork</h3>
+              <p>Practice with structured prompts (STAR/CAR), feedback rubrics, and realistic scenarios so your stories land under pressure.</p>
             </div>
 
             <div className="benefit-card card">
@@ -102,8 +102,8 @@ function Home() {
                   <path d="M18 9l-3 3-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <h3>Measurable Impact</h3>
-              <p>Track performance, uncover insights, and achieve data-backed growth</p>
+              <h3>Technical reps that feel real</h3>
+              <p>DS&A, debugging, and intro system-design drills with role-appropriate difficulty to build speed, accuracy, and confidence.</p>
             </div>
 
             <div className="benefit-card card">
@@ -113,8 +113,8 @@ function Home() {
                   <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" stroke="currentColor" strokeWidth="2"/>
                 </svg>
               </div>
-              <h3>Seamless Integration</h3>
-              <p>Connect tools, teams, and workflows with intelligent automation</p>
+              <h3>Company-specific tailoring</h3>
+              <p>Pick the company and role; we adapt focus areas, question style, and expectations to match what that team actually looks for.</p>
             </div>
           </div>
         </div>

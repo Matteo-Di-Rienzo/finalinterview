@@ -1,6 +1,7 @@
 import Home from './pages/Home'
 import Prepare from './pages/Prepare'
 import Technical from './pages/Technical'
+import Behavioral from './pages/Behavioral'
 import './App.css'
 import Footer from './components/Footer'
 import Header from './components/Header'
@@ -24,6 +25,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/prepare" element={<Prepare />} />
             <Route path="/technical" element={<Technical />} />
+            <Route path="/behavioral" element={<Behavioral />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           </main>
