@@ -56,7 +56,7 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
 
     return res.json({ ok: true, text });
   } catch (err) {
-    console.error('💥 Server error:', err);
+    console.error('Server error:', err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });
