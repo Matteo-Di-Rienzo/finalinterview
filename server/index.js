@@ -1,77 +1,81 @@
 require('dotenv').config();
-
-const { setTranscript, getTranscript } = require('./data/storeData');
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const { ElevenLabsClient } = require('@elevenlabs/elevenlabs-js');
+const { createSession, nextQuestion, getLastQuestion } = require('./sessionStore');
 const { runWorkflow } = require('./vellumExample');
-console.log('runWorkflow typeof:', typeof runWorkflow); // should print "function"
 
-
-const port = process.env.PORT || 5000;
 const app = express();
+const port = process.env.PORT || 5000;
 
 app.use(cors({ origin: ['http://localhost:5173'], credentials: true }));
 app.use(express.json());
 
-// Initialize ElevenLabs client (SDK)
-const elevenlabs = new ElevenLabsClient({
-  apiKey: process.env.ELEVENLABS_API_KEY,
-});
+const elevenlabs = new ElevenLabsClient({ apiKey: process.env.ELEVENLABS_API_KEY });
 
-// Multer: keep uploads in memory (no disk files)
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
+  limits: { fileSize: 25 * 1024 * 1024 },
 });
 
-// POST /api/transcribe  -> accepts FormData field "audio"
+app.get('/api/ping', (req, res) => {
+  res.json({ message: 'test connected', serverTime: Date.now() });
+});
+
+// 1) Start a session: returns first question
+app.post('/api/session', (req, res) => {
+  const { sessionId, firstQuestion } = createSession();
+  res.json({ ok: true, sessionId, question: firstQuestion });
+});
+
+// 2) Get the next question (sequential order)
+app.get('/api/sessions/:id/next', (req, res) => {
+  try {
+    const question = nextQuestion(req.params.id);
+    res.json({ ok: true, sessionId: req.params.id, question });
+  } catch (e) {
+    res.status(400).json({ ok: false, error: e.message });
+  }
+});
+
+// 3) Transcribe + send to Vellum using the *last* asked question
+// server/index.js
 app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   try {
-    console.log('HIT /api/transcribe');
+    // Log what actually arrived
+    console.log('[transcribe] content-type:', req.headers['content-type']);
+    console.log('[transcribe] hasFile:', !!req.file, 'fileType:', req.file?.mimetype, 'fileSize:', req.file?.size);
+    console.log('[transcribe] fields:', req.body, 'query:', req.query);
+
+    // Safe access: req.body can be undefined if not multipart
+    let sessionId = (req.body && (req.body.sessionId ?? req.body['sessionId'])) || req.query.sessionId || null;
 
     if (!req.file) {
-      console.log('No file on request');
       return res.status(400).json({ ok: false, error: 'No file uploaded' });
     }
 
-    // Use the actual MIME from the browser upload; drop ";codecs=opus" if present
-    const mime = (req.file.mimetype || 'audio/webm').split(';')[0];
-    console.log('Received:', {
-      name: req.file.originalname,
-      type: mime,
-      size: req.file.size,
-    });
-
-    // Build a Blob from the in-memory bytes and call ElevenLabs STT
-    const fileBlob = new Blob([req.file.buffer], { type: mime });
-
-    const transcription = await elevenlabs.speechToText.convert({
-      file: fileBlob,
-      modelId: 'scribe_v1',          // ✅ ElevenLabs STT model
-      // languageCode: 'en',         // optional: let it auto-detect if you omit
-      // diarize: false,             // optional
-      // tagAudioEvents: false,      // optional
-    });
-
-    const text = transcription?.text || '';
-    setTranscript(text);
-    console.log('Transcript:', text.slice(0, 200) || '(empty)');
-
+    // If sessionId missing/invalid, you can auto-create to keep UX smooth
+    let question;
     try {
-      const outputs = await runWorkflow(text);
-      console.log('Vellum Outputs: ', outputs);
-      return res.json({ ok: true, text, vellumOutputs: outputs });
-    } catch (e) {
-      console.error(e.message);
-      return res.json({ ok:true, text, vellumError: e.message });
+      if (!sessionId) throw new Error('Missing');
+      question = getLastQuestion(sessionId);
+    } catch {
+      const { sessionId: newId, firstQuestion } = createSession();
+      sessionId = newId;
+      question = firstQuestion;
+      console.warn('[transcribe] invalid/missing session; created new', sessionId);
     }
 
+    // ... continue with ElevenLabs/Vellum work ...
+    return res.json({ ok: true, sessionId, question, text: '(skip for now)' });
   } catch (err) {
-    console.error('Server error:', err);
+    console.error('[transcribe] error:', err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });
+
+
+
 
 app.listen(port, () => console.log(`Server listening on :${port}`));

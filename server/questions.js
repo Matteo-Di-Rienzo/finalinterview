@@ -1,0 +1,22 @@
+module.exports = [
+  "Tell me about yourself.",
+  "Why do you want this role?",
+  "Describe a challenge you overcame.",
+  "Tell me about a time you led a team.",
+  "What’s your biggest strength?",
+  "What’s your biggest weakness?",
+  "Describe a time you disagreed with a teammate.",
+  "Tell me about a project you’re proud of.",
+  "How do you handle tight deadlines?",
+  "Where do you see yourself in 3 years?",
+  "Why should we hire you?",
+  "Tell me about a failure and what you learned.",
+  "How do you prioritize tasks?",
+  "Describe your problem-solving process.",
+  "What motivates you?",
+  "How do you handle feedback?",
+  "Tell me about a time you took initiative.",
+  "What’s your preferred work style?",
+  "How do you deal with ambiguity?",
+  "Any questions for us?"
+];
