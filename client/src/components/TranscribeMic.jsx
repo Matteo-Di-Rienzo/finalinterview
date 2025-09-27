@@ -109,27 +109,48 @@ export default function TranscribeMic() {
     // even if ok is false, server returns 200 with errors + nextQuestion
     if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
 
-    // Only show the actual AI response, filter out error syntax
+    // Process the AI response with better logic
     let displayText = '';
     
-    if (data.text) {
-      // If we have the actual AI response, show it
-      displayText = data.text;
-    } else if (data.errors?.vellum) {
-      // Check if the vellum error contains actual advice (not quota errors)
+    // Priority 1: Check for Vellum AI feedback (the main content we want)
+    if (data.vellumText && data.vellumText.trim()) {
+      displayText = data.vellumText;
+    }
+    // Priority 2: Check for transcript (fallback)
+    else if (data.text && data.text.trim()) {
+      displayText = `Transcribed: ${data.text}`;
+    }
+    // Priority 3: Check for Vellum errors that might contain useful content
+    else if (data.errors?.vellum) {
       const vellumError = data.errors.vellum;
-      if (!vellumError.includes('Status code: 429') && 
-          !vellumError.includes('Quota exceeded') && 
-          !vellumError.includes('maximum of 25 per day')) {
-        // This might be actual advice, not a quota error
-        displayText = vellumError;
-      } else {
-        // It's a quota error, show a user-friendly message
+      // Check if it's a quota/rate limit error
+      if (vellumError.includes('Status code: 429') || 
+          vellumError.includes('Quota exceeded') || 
+          vellumError.includes('maximum of 25 per day') ||
+          vellumError.includes('rate limit')) {
         displayText = 'AI feedback is temporarily unavailable due to high usage. Please try again later.';
+      } else {
+        // This might be actual advice or content, not an error
+        displayText = vellumError;
       }
-    } else {
-      // No text or errors, show default message
+    }
+    // Priority 4: Check for other errors
+    else if (data.errors?.stt) {
+      displayText = `Speech-to-text error: ${data.errors.stt}`;
+    }
+    // Priority 5: Default message
+    else {
       displayText = 'Response recorded successfully.';
+    }
+    
+    // Clean up the display text
+    if (displayText) {
+      // Remove any JSON artifacts or unwanted formatting
+      displayText = displayText
+        .replace(/^["']|["']$/g, '') // Remove surrounding quotes
+        .replace(/\\n/g, '\n') // Convert escaped newlines
+        .replace(/\\"/g, '"') // Convert escaped quotes
+        .trim();
     }
 
     setStatus('done');

@@ -15,9 +15,17 @@ async function runWorkflow(transcript, question) {
   };
 
   const result = await client.executeWorkflow(request);
+  
+  // Debug: Log the full result structure
+  console.log('Vellum workflow result:', JSON.stringify(result, null, 2));
+  
   if (result.data.state === 'REJECTED') {
     throw new Error(result.data.error?.message || 'Workflow rejected');
   }
+  
+  // Debug: Log the outputs specifically
+  console.log('Vellum outputs:', JSON.stringify(result.data.outputs, null, 2));
+  
   return result.data.outputs;
 }
 

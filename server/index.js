@@ -106,11 +106,39 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
       if (!process.env.VELLUM_API_KEY) throw new Error('VELLUM_API_KEY not set');
       const outputs = await runWorkflow(transcript, askedQuestion);
       vellumOutputs = outputs || [];
-      const first = outputs?.[0];
-      vellumText = first?.value ?? first?.text ?? '';
+      
+      // Debug: Log the actual structure of Vellum outputs
+      console.log('Vellum outputs structure:', JSON.stringify(outputs, null, 2));
+      
+      // Try different ways to extract the text content
+      let extractedText = '';
+      if (outputs && outputs.length > 0) {
+        const first = outputs[0];
+        // Try different possible field names
+        extractedText = first?.value || 
+                       first?.text || 
+                       first?.content || 
+                       first?.output ||
+                       first?.data ||
+                       (typeof first === 'string' ? first : '');
+        
+        // If still no text, try to find any string value in the object
+        if (!extractedText && typeof first === 'object') {
+          for (const [key, value] of Object.entries(first)) {
+            if (typeof value === 'string' && value.trim().length > 0) {
+              extractedText = value;
+              break;
+            }
+          }
+        }
+      }
+      
+      vellumText = extractedText;
+      console.log('Extracted Vellum text:', vellumText);
     } catch (e) {
       // e.g., 429 quota exceeded
       vellumError = e?.response?.data?.detail || e?.message || String(e);
+      console.error('Vellum error:', vellumError);
     }
 
     // ---- ALWAYS advance the pointer ----
