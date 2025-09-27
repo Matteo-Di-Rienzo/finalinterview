@@ -29,45 +29,37 @@ app.post('/api/session', (req, res) => {
   res.json({ ok: true, sessionId, question: firstQuestion });
 });
 
-// 2) Get the next question (sequential order)
+// 2) (Optional) Manually advance to the next question
 app.get('/api/sessions/:id/next', (req, res) => {
   try {
-    const question = nextQuestion(req.params.id);
-    res.json({ ok: true, sessionId: req.params.id, question });
+    const { question, done } = nextQuestion(req.params.id);
+    res.json({ ok: true, sessionId: req.params.id, question, done });
   } catch (e) {
     res.status(400).json({ ok: false, error: e.message });
   }
 });
 
-// 3) Transcribe + send to Vellum using the *last* asked question
-// server/index.js
-// at top of server/index.js (Node 18+ has Blob/File; if not, uncomment polyfill)
-// const { Blob, File } = require('node:buffer');
-
-// if you ever run on Node < 18, uncomment next line:
-// const { Blob, File } = require('node:buffer');
-
+// 3) Transcribe + pass to Vellum, then ADVANCE and return nextQuestion
+// (Node 18+ has global Blob/File; if not, use: const { Blob, File } = require('node:buffer'))
+// server/index.js (only the /api/transcribe route shown)
 app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   try {
-    // ---- basic validation ----
-    if (!req.file) {
-      return res.status(400).json({ ok: false, error: 'No file uploaded' });
-    }
+    if (!req.file) return res.status(400).json({ ok: false, error: 'No file uploaded' });
 
-    // ---- session handling (robust to server restarts) ----
+    // ensure valid session; create if missing/invalid
     let sessionId = (req.body && req.body.sessionId) || req.query.sessionId || null;
-    let question;
+    let askedQuestion;
     try {
       if (!sessionId) throw new Error('Missing');
-      question = getLastQuestion(sessionId);
+      askedQuestion = getLastQuestion(sessionId);
     } catch {
       const created = createSession();
       sessionId = created.sessionId;
-      question = created.firstQuestion;
+      askedQuestion = created.firstQuestion;
       console.warn('[transcribe] missing/invalid session; created', sessionId);
     }
 
-    // ---- create a File from in-memory buffer ----
+    // build File from memory buffer
     const declared = (req.file.mimetype || '').split(';')[0];
     const name = (req.file.originalname || '').toLowerCase();
     let mime = declared && declared !== 'application/octet-stream' ? declared : '';
@@ -79,7 +71,6 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
       else if (name.endsWith('.mp3')) mime = 'audio/mpeg';
       else mime = 'audio/webm';
     }
-
     const filename =
       mime.includes('ogg') ? 'recording.ogg' :
       mime.includes('wav') ? 'recording.wav' :
@@ -88,42 +79,59 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
 
     const file = new File([req.file.buffer], filename, { type: mime });
 
-    // ---- ElevenLabs STT ----
+    // ---- Try STT and Vellum, but don't block advancing ----
+    let transcript = '';
+    let sttError = null;
+    let vellumError = null;
+    let vellumOutputs = [];
+    let vellumText = '';
+
     if (!process.env.ELEVENLABS_API_KEY) {
-      return res.status(500).json({ ok: false, error: 'ELEVENLABS_API_KEY not set' });
+      sttError = 'ELEVENLABS_API_KEY not set';
+    } else {
+      try {
+        const stt = await elevenlabs.speechToText.convert({
+          file,
+          modelId: 'scribe_v1',
+          tagAudioEvents: false,
+          diarize: false,
+        });
+        transcript = stt?.text || '';
+      } catch (e) {
+        sttError = e?.response?.data?.detail || e?.message || String(e);
+      }
     }
 
-    const stt = await elevenlabs.speechToText.convert({
-      file,
-      modelId: 'scribe_v1',
-      tagAudioEvents: false,
-      diarize: false,
-    });
+    try {
+      if (!process.env.VELLUM_API_KEY) throw new Error('VELLUM_API_KEY not set');
+      const outputs = await runWorkflow(transcript, askedQuestion);
+      vellumOutputs = outputs || [];
+      const first = outputs?.[0];
+      vellumText = first?.value ?? first?.text ?? '';
+    } catch (e) {
+      // e.g., 429 quota exceeded
+      vellumError = e?.response?.data?.detail || e?.message || String(e);
+    }
 
-    const transcript = stt?.text || '';
+    // ---- ALWAYS advance the pointer ----
+    const { question: nextQuestionValue, done } = nextQuestion(sessionId);
 
-    // ---- Vellum workflow ----
-    const outputs = await runWorkflow(transcript, question);
-    const first = outputs?.[0];
-    const vellumText = first?.value ?? first?.text ?? JSON.stringify(first ?? '');
-
+    // Return 200 so the client can move on, but include errors for display
     return res.json({
-      ok: true,
+      ok: !sttError && !vellumError,
       sessionId,
-      question,
+      askedQuestion,
+      nextQuestion: nextQuestionValue,
+      done,
       text: transcript,
-      vellumOutputs: outputs,
+      vellumOutputs,
       vellumText,
+      errors: { stt: sttError, vellum: vellumError },
     });
   } catch (err) {
-    console.error('[transcribe] error:', err);
+    console.error('[transcribe] fatal error:', err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });
-
-
-
-
-
 
 app.listen(port, () => console.log(`Server listening on :${port}`));

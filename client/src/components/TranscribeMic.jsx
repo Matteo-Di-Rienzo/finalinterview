@@ -5,6 +5,7 @@ export default function TranscribeMic() {
   const [result, setResult] = useState('');
   const [sessionId, setSessionId] = useState(null);
   const [question, setQuestion] = useState(null);
+  const [done, setDone] = useState(false);
   const [sessionErr, setSessionErr] = useState('');
   const [startErr, setStartErr] = useState('');
   const mediaRecorderRef = useRef(null);
@@ -15,13 +16,12 @@ export default function TranscribeMic() {
     (async () => {
       try {
         setSessionErr('');
-        const res = await fetch('http://localhost:5000/api/session', {
-          method: 'POST',
-        });
+        const res = await fetch('http://localhost:5000/api/session', { method: 'POST' });
         const data = await res.json();
         if (!res.ok || !data.ok) throw new Error(data?.error || `HTTP ${res.status}`);
         setSessionId(data.sessionId);
         setQuestion(data.question);
+        setDone(false);
       } catch (e) {
         setSessionErr(e.message);
         console.error('Session create failed:', e);
@@ -35,8 +35,8 @@ export default function TranscribeMic() {
       'audio/webm;codecs=opus',
       'audio/webm',
       'audio/ogg;codecs=opus',
-      'audio/mp4',   // Safari
-      'audio/mpeg'
+      'audio/mp4',
+      'audio/mpeg',
     ];
     return candidates.find(type => MediaRecorder.isTypeSupported(type)) || '';
   };
@@ -48,12 +48,10 @@ export default function TranscribeMic() {
       setStatus('recording');
       chunksRef.current = [];
 
-      // Ask for mic permission
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(err => {
         throw new Error(`Mic access failed: ${err.name || ''} ${err.message || ''}`.trim());
       });
 
-      // Construct recorder
       const mimeType = getPreferredMimeType();
       let mr;
       try {
@@ -81,12 +79,11 @@ export default function TranscribeMic() {
           setStatus('error');
           setResult(String(e.message || e));
         } finally {
-          // always stop the mic
           stream.getTracks().forEach(t => t.stop());
         }
       };
 
-      mr.start(500); // 0.5s chunks
+      mr.start(500);
     } catch (e) {
       setStartErr(String(e.message || e));
       setStatus('error');
@@ -100,36 +97,58 @@ export default function TranscribeMic() {
   };
 
   const sendBlob = async (blob) => {
-    const fd = new FormData();
-    const ext = (blob.type.includes('webm') && 'webm') ||
-                (blob.type.includes('ogg') && 'ogg') ||
-                (blob.type.includes('mp4') && 'm4a') ||
-                'webm';
-    fd.append('audio', new File([blob], `recording.${ext}`, { type: blob.type || 'audio/webm' }));
-    if (sessionId) fd.append('sessionId', sessionId);
+  const fd = new FormData();
+  fd.append('sessionId', sessionId);
+  fd.append('audio', new File([blob], 'recording.webm', { type: blob.type || 'audio/webm' }));
 
-    const res = await fetch('http://localhost:5000/api/transcribe', {
-      method: 'POST', body: fd });
-    const data = await res.json().catch(() => ({}));
+  let data;
+  try {
+    const res = await fetch('http://localhost:5000/api/transcribe', { method: 'POST', body: fd });
+    data = await res.json().catch(() => ({}));
+
+    // even if ok is false, server returns 200 with errors + nextQuestion
     if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
-    setStatus('done');
-    setResult(data.text || JSON.stringify(data, null, 2));
-  };
+
+    // show transcript or vendor errors
+    const vendorErrs = []
+      .concat(data?.errors?.stt ? [`STT: ${data.errors.stt}`] : [])
+      .concat(data?.errors?.vellum ? [`Advice: ${data.errors.vellum}`] : []);
+    const info = vendorErrs.length ? `⚠️ ${vendorErrs.join(' | ')}` : '';
+
+    setStatus(vendorErrs.length ? 'error' : 'done');
+    setResult(data.text || info || 'Uploaded.');
+
+    if (data.sessionId && data.sessionId !== sessionId) setSessionId(data.sessionId);
+    setQuestion(data.nextQuestion || null);   // will be null at end
+    setDone(Boolean(data.done));
+  } catch (e) {
+    // Last-resort: still try to advance locally if server included nextQuestion
+    if (data?.nextQuestion !== undefined) {
+      setQuestion(data.nextQuestion);
+      setDone(Boolean(data.done));
+    }
+    setStatus('error');
+    setResult(String(e.message || e));
+  }
+};
+
 
   const sessionReady = Boolean(sessionId);
+  const canRecord = sessionReady && !done && status !== 'sending' && status !== 'recording';
 
   return (
     <div style={{ border:'1px solid #ddd', padding:12, borderRadius:8 }}>
       <h3>Record mic → Transcribe</h3>
       <p style={{margin:'4px 0', fontSize:12}}>
-        Session: {sessionId || '—'}{question ? ` • Q: ${question}` : ''}
+        Session: {sessionId || '—'}
+        {question ? ` • Q: ${question}` : done ? ' • (No more questions)' : ''}
       </p>
       {sessionErr && <p style={{color:'crimson'}}>Session error: {sessionErr}</p>}
       {startErr && <p style={{color:'crimson'}}>Start error: {startErr}</p>}
 
       <div style={{ display:'flex', gap:8 }}>
-        <button onClick={start} disabled={status==='recording' || status==='sending' || !sessionReady}>
-          Start
+        <button onClick={start} disabled={!canRecord}>
+          {done ? 'All done' : 'Start'}
         </button>
         <button onClick={stop} disabled={status!=='recording'}>
           Stop &amp; Send

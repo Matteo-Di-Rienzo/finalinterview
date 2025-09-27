@@ -1,6 +1,6 @@
-// server/sessionStore.js (CommonJS)
+// server/sessionStore.js
 const crypto = require('crypto');
-const QUESTIONS = require('./questions'); // <-- use your file
+const QUESTIONS = require('./questions');
 
 const sessions = new Map(); // id -> { index, lastQuestion }
 
@@ -10,18 +10,26 @@ function createSession() {
   sessions.set(sessionId, { index: 0, lastQuestion: firstQuestion });
   return { sessionId, firstQuestion };
 }
+
 function nextQuestion(id) {
   const s = sessions.get(id);
   if (!s) throw new Error('Invalid session');
-  const nextIndex = Math.min(s.index + 1, QUESTIONS.length - 1);
-  const q = QUESTIONS[nextIndex];
-  s.index = nextIndex;
-  s.lastQuestion = q;
-  return q;
+
+  // At the end: no next question
+  if (s.index >= QUESTIONS.length - 1) {
+    return { question: null, done: true };
+  }
+
+  s.index += 1;
+  s.lastQuestion = QUESTIONS[s.index];
+  const done = s.index >= QUESTIONS.length - 1;
+  return { question: s.lastQuestion, done };
 }
+
 function getLastQuestion(id) {
   const s = sessions.get(id);
   if (!s) throw new Error('Invalid session');
   return s.lastQuestion;
 }
+
 module.exports = { createSession, nextQuestion, getLastQuestion };
