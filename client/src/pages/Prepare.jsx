@@ -133,36 +133,40 @@ function Prepare() {
           </div>
         </div>
 
-        {/* Preparation Options */}
-        <div className="preparation-section">
-          <h3>Choose Your Preparation Focus</h3>
-          <div className="preparation-grid">
-            <div className="prep-card card">
-              <div className="prep-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                </svg>
+        {/* Preparation Options - Only show after voice input */}
+        {interviewDetails.company && interviewDetails.position && (
+          <div className="preparation-section">
+            <h3>Choose Your Preparation Focus</h3>
+            <p className="preparation-subtitle">
+              Great! Now that we know you're interviewing for <strong>{interviewDetails.position}</strong> at <strong>{interviewDetails.company}</strong>, 
+              let's get you prepared with targeted practice.
+            </p>
+            <div className="preparation-grid">
+              <div className="prep-card card">
+                <div className="prep-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                </div>
+                <h4>Behavioral Questions</h4>
+                <p>Practice STAR method responses for common behavioral scenarios</p>
+                <Link to="/behavioral" className="secondary-button">Start Practice</Link>
               </div>
-              <h4>Behavioral Questions</h4>
-              <p>Practice STAR method responses for common behavioral scenarios</p>
-              <Link to="/behavioral" className="secondary-button">Start Practice</Link>
-            </div>
 
-            <div className="prep-card card">
-              <div className="prep-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="2"/>
-                </svg>
+              <div className="prep-card card">
+                <div className="prep-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                </div>
+                <h4>Technical Questions</h4>
+                <p>Code challenges and technical problem-solving practice</p>
+                <Link to="/technical" className="secondary-button">Start Practice</Link>
               </div>
-              <h4>Technical Questions</h4>
-              <p>Code challenges and technical problem-solving practice</p>
-              <Link to="/technical" className="secondary-button">Start Practice</Link>
             </div>
-
-            
           </div>
-        </div>
+        )}
 
         {/* Action Buttons */}
         

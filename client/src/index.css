@@ -594,7 +594,21 @@ button:focus-visible {
 .preparation-section h3 {
   text-align: center;
   font-size: 2rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
+}
+
+.preparation-subtitle {
+  text-align: center;
+  font-size: 1.125rem;
+  color: #a1a1aa;
+  max-width: 600px;
+  margin: 0 auto 2rem;
+  line-height: 1.6;
+}
+
+.preparation-subtitle strong {
+  color: #60a5fa;
+  font-weight: 600;
 }
 
 .preparation-grid {
@@ -1402,5 +1416,185 @@ button:focus-visible {
 
   .star-card {
     padding: 2rem 1rem;
+  }
+}
+
+/* TranscribeMic Component Styles */
+.transcribe-mic-container {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem;
+  margin: 1rem 0;
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.transcribe-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.transcribe-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  color: #60a5fa;
+}
+
+.transcribe-header h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: #ffffff;
+}
+
+.transcribe-description {
+  color: #a1a1aa;
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.error-message {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.transcribe-controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.transcribe-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  min-width: 140px;
+  justify-content: center;
+}
+
+.transcribe-button.recording {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.transcribe-status {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  font-size: 0.875rem;
+  color: #a1a1aa;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6b7280;
+  transition: background-color 0.3s ease;
+}
+
+.status-indicator.idle .status-dot {
+  background: #6b7280;
+}
+
+.status-indicator.recording .status-dot {
+  background: #ef4444;
+  animation: pulse 1s infinite;
+}
+
+.status-indicator.sending .status-dot {
+  background: #f59e0b;
+  animation: spin 1s linear infinite;
+}
+
+.status-indicator.done .status-dot {
+  background: #10b981;
+}
+
+.status-indicator.error .status-dot {
+  background: #ef4444;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.transcribe-result {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.transcribe-result h4 {
+  color: #ffffff;
+  font-size: 1.125rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.result-text {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  color: #e5e5e5;
+  font-size: 1rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  min-height: 100px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .transcribe-mic-container {
+    padding: 1.5rem;
+  }
+
+  .transcribe-controls {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .transcribe-button {
+    width: 100%;
+    max-width: 200px;
   }
 }

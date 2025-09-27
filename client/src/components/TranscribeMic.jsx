@@ -137,26 +137,79 @@ export default function TranscribeMic() {
   const canRecord = sessionReady && !done && status !== 'sending' && status !== 'recording';
 
   return (
-    <div style={{ border:'1px solid #ddd', padding:12, borderRadius:8 }}>
-      <h3>Record mic → Transcribe</h3>
-      <p style={{margin:'4px 0', fontSize:12}}>
-        Session: {sessionId || '—'}
-        {question ? ` • Q: ${question}` : done ? ' • (No more questions)' : ''}
-      </p>
-      {sessionErr && <p style={{color:'crimson'}}>Session error: {sessionErr}</p>}
-      {startErr && <p style={{color:'crimson'}}>Start error: {startErr}</p>}
+    <div className="transcribe-mic-container">
+      <div className="transcribe-header">
+        <div className="transcribe-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" stroke="currentColor" strokeWidth="2"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2" stroke="currentColor" strokeWidth="2"/>
+            <line x1="12" y1="19" x2="12" y2="23" stroke="currentColor" strokeWidth="2"/>
+            <line x1="8" y1="23" x2="16" y2="23" stroke="currentColor" strokeWidth="2"/>
+          </svg>
+        </div>
+        <h3>Practice Your Response</h3>
+        <p className="transcribe-description">
+          {question ? `Question: ${question}` : done ? 'All questions completed!' : 'Ready to start your practice session'}
+        </p>
+      </div>
 
-      <div style={{ display:'flex', gap:8 }}>
-        <button onClick={start} disabled={!canRecord}>
-          {done ? 'All done' : 'Start'}
+      {sessionErr && <div className="error-message">Session error: {sessionErr}</div>}
+      {startErr && <div className="error-message">Start error: {startErr}</div>}
+
+      <div className="transcribe-controls">
+        <button 
+          className={`transcribe-button primary-button ${status === 'recording' ? 'recording' : ''}`}
+          onClick={start} 
+          disabled={!canRecord}
+        >
+          {status === 'recording' ? (
+            <>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                <circle cx="12" cy="12" r="3" fill="currentColor"/>
+              </svg>
+              Recording...
+            </>
+          ) : done ? (
+            'All Done'
+          ) : (
+            <>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                <circle cx="12" cy="12" r="3" fill="currentColor"/>
+              </svg>
+              Start Recording
+            </>
+          )}
         </button>
-        <button onClick={stop} disabled={status!=='recording'}>
-          Stop &amp; Send
+        
+        <button 
+          className="transcribe-button secondary-button"
+          onClick={stop} 
+          disabled={status !== 'recording'}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>
+          </svg>
+          Stop & Send
         </button>
       </div>
 
-      <p style={{ marginTop:8 }}>Status: {status}</p>
-      {result && <pre style={{ whiteSpace:'pre-wrap' }}>{result}</pre>}
+      <div className="transcribe-status">
+        <div className={`status-indicator ${status}`}>
+          <div className="status-dot"></div>
+          <span>Status: {status}</span>
+        </div>
+      </div>
+
+      {result && (
+        <div className="transcribe-result">
+          <h4>Your Response:</h4>
+          <div className="result-text">
+            {result}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
