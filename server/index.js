@@ -4,6 +4,7 @@ const cors = require('cors');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+const { ElevenLabsClient } = require('@elevenlabs/elevenlabs-js');
 
 const port = process.env.PORT || 5000;
 const app = express();
@@ -14,10 +15,15 @@ app.use(express.json());
 // Multer setup for file uploads
 const upload = multer({ dest: 'uploads/' });
 
-// Health + demo routes
+// Initialize ElevenLabs client
+const elevenlabs = new ElevenLabsClient({
+  apiKey: process.env.ELEVENLABS_API_KEY,
+});
+
+// Health/demo routes
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 app.get('/api/public', (req, res) => res.json({ ok: true, message: 'Public endpoint' }));
-app.get('/api/secure', (req, res) => res.json({ ok: true, message: 'Secure placeholder (no verification on server yet)' }));
+app.get('/api/secure', (req, res) => res.json({ ok: true, message: 'Secure placeholder' }));
 app.get('/api/ping', (req, res) => res.json({ ok: true, message: 'test', serverTime: Date.now() }));
 
 // 🔹 Transcribe endpoint: upload MP3 -> ElevenLabs STT
@@ -28,32 +34,22 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     }
 
     const filePath = path.resolve(req.file.path);
+    const audioBuffer = fs.readFileSync(filePath);
+    const audioBlob = new Blob([audioBuffer], { type: 'audio/mp3' });
 
-    // Build multipart form data using Node's FormData
-    const formData = new FormData();
-    formData.append('file', new Blob([fs.readFileSync(filePath)]), req.file.originalname);
-    formData.append('model_id', 'eleven_multilingual_v2'); // adjust if needed
-
-    // Send to ElevenLabs
-    const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
-      method: 'POST',
-      headers: {
-        'xi-api-key': process.env.ELEVENLABS_API_KEY,
-      },
-      body: formData,
+    // Call ElevenLabs STT with correct params
+    const transcription = await elevenlabs.speechToText.convert({
+      file: audioBlob,
+      modelId: 'scribe_v1', // ✅ valid model
+      tagAudioEvents: true, // optional
+      languageCode: 'eng', // or null for auto-detect
+      diarize: false, // set true if you want speaker separation
     });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`ElevenLabs error: ${errText}`);
-    }
-
-    const data = await response.json();
 
     // Cleanup uploaded file
     fs.unlinkSync(filePath);
 
-    res.json({ ok: true, text: data.text });
+    res.json({ ok: true, text: transcription?.text || '' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, error: err.message });
