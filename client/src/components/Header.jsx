@@ -2,12 +2,25 @@ import { Link } from "react-router-dom";
 
 function Header() {
   return (
-  <div className="header-list">
-    <ul>
-      <li><Link to="/">Home</Link></li>
-      <li><Link to="/about">About</Link></li>
-    </ul>
-  </div>
+    <header className="header">
+      <div className="container">
+        <div className="header-content">
+          <Link to="/" className="logo">
+            <div className="logo-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H5C3.89 1 3 1.89 3 3V21C3 22.11 3.89 23 5 23H19C20.11 23 21 22.11 21 21V9M19 9H14V4L19 9Z" fill="currentColor"/>
+              </svg>
+            </div>
+            <span className="logo-text">InterviewPrep</span>
+          </Link>
+          
+          <nav className="nav">
+            <Link to="/" className="nav-link">Home</Link>
+            <Link to="/prepare" className="nav-link">Prepare</Link>
+          </nav>
+        </div>
+      </div>
+    </header>
   );
 }
 
