@@ -1,79 +1,39 @@
-// npm install vellum-ai --save
-import { VellumClient, Vellum } from "vellum-ai";
+require('dotenv').config();
+const { VellumClient } = require('vellum-ai');
 
-// configurable parameters
-const workflowDeploymentName = "grade-habits";
-const releaseTag = "LATEST";
-const inputs: Vellum.WorkflowRequestInputRequest[] = [
-  {
-    type: "NUMBER",
-    name: "age",
-    value: { 'example-key': 'example-value' },
-  },
-  {
-    type: "NUMBER",
-    name: "study_time_week",
-    value: { 'example-key': 'example-value' },
-  },
-  {
-    type: "NUMBER",
-    name: "daytime_evening_classes",
-    value: { 'example-key': 'example-value' },
-  },
-  {
-    type: "NUMBER",
-    name: "attendance",
-    value: { 'example-key': 'example-value' },
-  },
-  {
-    type: "NUMBER",
-    name: "previous_qualifications",
-    value: { 'example-key': 'example-value' },
-  },
-  {
-    type: "NUMBER",
-    name: "displaced",
-    value: { 'example-key': 'example-value' },
-  },
-  {
-    type: "NUMBER",
-    name: "entertainment_hours",
-    value: { 'example-key': 'example-value' },
-  },
-  {
-    type: "NUMBER",
-    name: "work",
-    value: { 'example-key': 'example-value' },
-  },
-  {
-    type: "NUMBER",
-    name: "average_sleep",
-    value: { 'example-key': 'example-value' },
-  },
-  {
-    type: "NUMBER",
-    name: "mental_health",
-    value: { 'example-key': 'example-value' },
-  },
-]
+async function runWorkflow(transcript) {
+  const client = new VellumClient({ apiKey: process.env.VELLUM_API_KEY });
 
-// create your API key here: https://app.vellum.ai/organization?tab=workspaces&workspace-settings-tab=environments
-const vellum = new VellumClient({
-  apiKey: process.env.VELLUM_API_KEY!,
-});
+  const request = {
+    workflowDeploymentName: 'interview', // <- your workflow deployment name
+    releaseTag: 'LATEST',
+    inputs: [
+      // include your transcript if your workflow expects it
+      { type: 'STRING', name: 'transcript', value: transcript || '' },
 
-// setup the workflow
-const request: Vellum.ExecuteWorkflowRequest = {
-  workflowDeploymentName,
-  releaseTag,
-  inputs,
-};
+      // EXAMPLE numeric inputs (MUST be numbers, not objects)
+      // { type: 'NUMBER', name: 'age', value: 20 },
+      // { type: 'NUMBER', name: 'study_time_week', value: 6 },
+      // { type: 'NUMBER', name: 'daytime_evening_classes', value: 1 },
+      // { type: 'NUMBER', name: 'attendance', value: 95 },
+      // { type: 'NUMBER', name: 'previous_qualifications', value: 2 },
+      // { type: 'NUMBER', name: 'displaced', value: 0 },
+      // { type: 'NUMBER', name: 'entertainment_hours', value: 10 },
+      // { type: 'NUMBER', name: 'work', value: 15 },
+      // { type: 'NUMBER', name: 'average_sleep', value: 7 },
+      // { type: 'NUMBER', name: 'mental_health', value: 8 },
+    ],
+  };
 
-// execute the workflow
-const result = await client.executeWorkflow(request);
+  const result = await client.executeWorkflow(request);
 
-if (result.data.state === "REJECTED") {
-  throw new Error(result.data.error!.message)
+  if (result.data.state === 'REJECTED') {
+    throw new Error(result.data.error?.message || 'Workflow rejected');
+  }
+
+  // result.data.outputs is an array; pick what you need
+  console.log(result.data.outputs);
+  return result.data.outputs;
 }
 
-console.log(result.data.outputs);
+module.exports = { runWorkflow };
