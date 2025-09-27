@@ -1,4 +1,4 @@
-// server/index.js
+const { setTranscript, getTranscript } = require('./data/storeData');
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -52,6 +52,7 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     });
 
     const text = transcription?.text || '';
+    setTranscript(text);
     console.log('Transcript:', text.slice(0, 200) || '(empty)');
 
     return res.json({ ok: true, text });
