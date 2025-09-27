@@ -44,19 +44,18 @@ app.get('/api/sessions/:id/next', (req, res) => {
 // at top of server/index.js (Node 18+ has Blob/File; if not, uncomment polyfill)
 // const { Blob, File } = require('node:buffer');
 
+// if you ever run on Node < 18, uncomment next line:
+// const { Blob, File } = require('node:buffer');
+
 app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   try {
-    console.time('transcribe_total');
-    console.log('[transcribe] content-type:', req.headers['content-type']);
-    console.log('[transcribe] hasFile:', !!req.file, 'fileType:', req.file?.mimetype, 'fileSize:', req.file?.size);
-    console.log('[transcribe] fields:', req.body, 'query:', req.query);
-
+    // ---- basic validation ----
     if (!req.file) {
       return res.status(400).json({ ok: false, error: 'No file uploaded' });
     }
 
-    // --- session handling (tolerant to server restarts) ---
-    let sessionId = (req.body && (req.body.sessionId ?? req.body['sessionId'])) || req.query.sessionId || null;
+    // ---- session handling (robust to server restarts) ----
+    let sessionId = (req.body && req.body.sessionId) || req.query.sessionId || null;
     let question;
     try {
       if (!sessionId) throw new Error('Missing');
@@ -65,19 +64,19 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
       const created = createSession();
       sessionId = created.sessionId;
       question = created.firstQuestion;
-      console.warn('[transcribe] invalid/missing session; created new', sessionId);
+      console.warn('[transcribe] missing/invalid session; created', sessionId);
     }
 
-    // --- build a proper File from memory buffer ---
-    const declaredMime = (req.file.mimetype || '').split(';')[0];
-    const lowerName = (req.file.originalname || '').toLowerCase();
-    let mime = declaredMime && declaredMime !== 'application/octet-stream' ? declaredMime : '';
+    // ---- create a File from in-memory buffer ----
+    const declared = (req.file.mimetype || '').split(';')[0];
+    const name = (req.file.originalname || '').toLowerCase();
+    let mime = declared && declared !== 'application/octet-stream' ? declared : '';
     if (!mime) {
-      if (lowerName.endsWith('.webm')) mime = 'audio/webm';
-      else if (lowerName.endsWith('.wav')) mime = 'audio/wav';
-      else if (lowerName.endsWith('.ogg')) mime = 'audio/ogg';
-      else if (lowerName.endsWith('.m4a') || lowerName.endsWith('.mp4')) mime = 'audio/mp4';
-      else if (lowerName.endsWith('.mp3')) mime = 'audio/mpeg';
+      if (name.endsWith('.webm')) mime = 'audio/webm';
+      else if (name.endsWith('.wav')) mime = 'audio/wav';
+      else if (name.endsWith('.ogg')) mime = 'audio/ogg';
+      else if (name.endsWith('.m4a') || name.endsWith('.mp4')) mime = 'audio/mp4';
+      else if (name.endsWith('.mp3')) mime = 'audio/mpeg';
       else mime = 'audio/webm';
     }
 
@@ -87,71 +86,41 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
       mime.includes('mpeg') ? 'recording.mp3' :
       mime.includes('mp4')  ? 'recording.m4a' : 'recording.webm';
 
-    // Node 18+ has global File; if not, use require('node:buffer').File
     const file = new File([req.file.buffer], filename, { type: mime });
 
-    // --- Dry run to debug UI without vendors ---
-    if (req.query.dry === '1') {
-      console.log('[transcribe] DRY RUN – skipping ElevenLabs & Vellum');
-      console.timeEnd('transcribe_total');
-      return res.json({
-        ok: true,
-        sessionId,
-        question,
-        text: '(dry) hello world',
-        vellumOutputs: [],
-        vellumText: '(dry)',
-      });
-    }
-
-    const withTimeout = (p, ms, label) =>
-      Promise.race([
-        p,
-        new Promise((_, rej) => setTimeout(() => rej(new Error(`${label} timed out after ${ms} ms`)), ms)),
-      ]);
-
-    // --- ElevenLabs STT ---
-    let transcript = '';
+    // ---- ElevenLabs STT ----
     if (!process.env.ELEVENLABS_API_KEY) {
-      console.warn('[transcribe] ELEVENLABS_API_KEY missing – skipping STT');
-      transcript = '(no ELEVENLABS_API_KEY)';
-    } else {
-      console.time('eleven_stt');
-      console.log('[transcribe] calling ElevenLabs STT', { mime, filename });
-      const stt = await withTimeout(
-        elevenlabs.speechToText.convert({
-          file,
-          modelId: 'scribe_v1',
-          tagAudioEvents: false,
-          diarize: false,
-        }),
-        20000,
-        'ElevenLabs STT'
-      );
-      console.timeEnd('eleven_stt');
-      transcript = stt?.text || '';
-      console.log('[transcribe] transcript length:', transcript.length);
+      return res.status(500).json({ ok: false, error: 'ELEVENLABS_API_KEY not set' });
     }
 
-    // --- Vellum workflow ---
-    console.time('vellum');
-    const outputs = await withTimeout(
-      runWorkflow(transcript, question),   // ensure this returns a value
-      20000,
-      'Vellum workflow'
-    );
-    console.timeEnd('vellum');
+    const stt = await elevenlabs.speechToText.convert({
+      file,
+      modelId: 'scribe_v1',
+      tagAudioEvents: false,
+      diarize: false,
+    });
 
+    const transcript = stt?.text || '';
+
+    // ---- Vellum workflow ----
+    const outputs = await runWorkflow(transcript, question);
     const first = outputs?.[0];
     const vellumText = first?.value ?? first?.text ?? JSON.stringify(first ?? '');
 
-    console.timeEnd('transcribe_total');
-    return res.json({ ok: true, sessionId, question, text: transcript, vellumOutputs: outputs, vellumText });
+    return res.json({
+      ok: true,
+      sessionId,
+      question,
+      text: transcript,
+      vellumOutputs: outputs,
+      vellumText,
+    });
   } catch (err) {
     console.error('[transcribe] error:', err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });
+
 
 
 

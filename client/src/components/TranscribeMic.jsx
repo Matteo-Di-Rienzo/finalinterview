@@ -17,7 +17,6 @@ export default function TranscribeMic() {
         setSessionErr('');
         const res = await fetch('http://localhost:5000/api/session', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
         });
         const data = await res.json();
         if (!res.ok || !data.ok) throw new Error(data?.error || `HTTP ${res.status}`);
@@ -109,7 +108,8 @@ export default function TranscribeMic() {
     fd.append('audio', new File([blob], `recording.${ext}`, { type: blob.type || 'audio/webm' }));
     if (sessionId) fd.append('sessionId', sessionId);
 
-    const res = await fetch('http://localhost:5000/api/transcribe', { method: 'POST', body: fd });
+    const res = await fetch('http://localhost:5000/api/transcribe', {
+      method: 'POST', body: fd });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
     setStatus('done');
