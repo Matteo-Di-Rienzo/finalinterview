@@ -109,14 +109,31 @@ export default function TranscribeMic() {
     // even if ok is false, server returns 200 with errors + nextQuestion
     if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
 
-    // show transcript or vendor errors
-    const vendorErrs = []
-      .concat(data?.errors?.stt ? [`STT: ${data.errors.stt}`] : [])
-      .concat(data?.errors?.vellum ? [`Advice: ${data.errors.vellum}`] : []);
-    const info = vendorErrs.length ? `⚠️ ${vendorErrs.join(' | ')}` : '';
+    // Only show the actual AI response, filter out error syntax
+    let displayText = '';
+    
+    if (data.text) {
+      // If we have the actual AI response, show it
+      displayText = data.text;
+    } else if (data.errors?.vellum) {
+      // Check if the vellum error contains actual advice (not quota errors)
+      const vellumError = data.errors.vellum;
+      if (!vellumError.includes('Status code: 429') && 
+          !vellumError.includes('Quota exceeded') && 
+          !vellumError.includes('maximum of 25 per day')) {
+        // This might be actual advice, not a quota error
+        displayText = vellumError;
+      } else {
+        // It's a quota error, show a user-friendly message
+        displayText = 'AI feedback is temporarily unavailable due to high usage. Please try again later.';
+      }
+    } else {
+      // No text or errors, show default message
+      displayText = 'Response recorded successfully.';
+    }
 
-    setStatus(vendorErrs.length ? 'error' : 'done');
-    setResult(data.text || info || 'Uploaded.');
+    setStatus('done');
+    setResult(displayText);
 
     if (data.sessionId && data.sessionId !== sessionId) setSessionId(data.sessionId);
     setQuestion(data.nextQuestion || null);   // will be null at end
