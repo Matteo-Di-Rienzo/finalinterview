@@ -221,7 +221,7 @@ export default function TranscribeMic() {
 
       {result && (
         <div className="transcribe-result">
-          <h4>Your Response:</h4>
+          <h4>Your AI Feedback:</h4>
           <div className="result-text">
             {result}
           </div>
