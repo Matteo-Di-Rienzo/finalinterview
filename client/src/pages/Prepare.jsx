@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import TestConnection from '../components/Test'
-import TranscribeMic from '../components/TranscribeMic'
+
 
 function Prepare() {
   const [isRecording, setIsRecording] = useState(false);
@@ -42,8 +41,7 @@ function Prepare() {
             </svg>
             Back to Home
           </Link>
-          <TestConnection />
-          <TranscribeMic />
+
           <div className="prepare-title">
             <h1>Prepare for Your Interview</h1>
             <p>Tell us about your upcoming interview and we'll help you prepare</p>
