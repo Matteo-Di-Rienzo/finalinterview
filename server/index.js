@@ -1,9 +1,13 @@
-const { setTranscript, getTranscript } = require('./data/storeData');
 require('dotenv').config();
+
+const { setTranscript, getTranscript } = require('./data/storeData');
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const { ElevenLabsClient } = require('@elevenlabs/elevenlabs-js');
+const { runWorkflow } = require('./vellumExample');
+console.log('runWorkflow typeof:', typeof runWorkflow); // should print "function"
+
 
 const port = process.env.PORT || 5000;
 const app = express();
@@ -55,7 +59,15 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     setTranscript(text);
     console.log('Transcript:', text.slice(0, 200) || '(empty)');
 
-    return res.json({ ok: true, text });
+    try {
+      const outputs = await runWorkflow(text);
+      console.log('Vellum Outputs: ', outputs);
+      return res.json({ ok: true, text, vellumOutputs: outputs });
+    } catch (e) {
+      console.error(e.message);
+      return res.json({ ok:true, text, vellumError: e.message });
+    }
+
   } catch (err) {
     console.error('Server error:', err);
     return res.status(500).json({ ok: false, error: err.message });

@@ -5,7 +5,7 @@ async function runWorkflow(transcript) {
   const client = new VellumClient({ apiKey: process.env.VELLUM_API_KEY });
 
   const request = {
-    workflowDeploymentName: 'interview', // <- your workflow deployment name
+    workflowDeploymentName: 'interview-agent', // <- your workflow deployment name
     releaseTag: 'LATEST',
     inputs: [
       // include your transcript if your workflow expects it
