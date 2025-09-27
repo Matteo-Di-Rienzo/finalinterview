@@ -182,7 +182,7 @@ function Prepare() {
               </div>
               <h4>Technical Questions</h4>
               <p>Code challenges and technical problem-solving practice</p>
-              <button className="secondary-button">Start Practice</button>
+              <Link to="/technical" className="secondary-button">Start Practice</Link>
             </div>
 
             <div className="prep-card card">
