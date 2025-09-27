@@ -1,4 +1,5 @@
 module.exports = [
+"Tell me about yourself",
 "Tell me about a situation where you had a conflict with someone on your team. What was it about? What did you do? How did they react? What was the outcome?",
 "Give an example of when you saw a peer struggling and decided to step in and help. What was the situation and what actions did you take? What was the outcome?",
 "Tell me about a time you committed a mistake?",
