@@ -1,6 +1,6 @@
-# TechTO - AI-Powered Interview Preparation Platform
+# finalinterview - AI-Powered Interview Preparation Platform
 
-TechTO is a comprehensive interview preparation platform that helps university students and job seekers practice for technical and behavioral interviews using AI-powered feedback. The platform combines structured learning paths with voice-based practice sessions to provide realistic interview preparation.
+finalinterview is a comprehensive interview preparation platform that helps university students and job seekers practice for technical and behavioral interviews using AI-powered feedback. The platform combines structured learning paths with voice-based practice sessions to provide realistic interview preparation.
 
 ## 🚀 Features
 
@@ -36,7 +36,7 @@ TechTO is a comprehensive interview preparation platform that helps university s
 ## 📁 Project Structure
 
 ```
-TechTO/
+finalinterview/
 ├── client/                 # React frontend
 │   ├── src/
 │   │   ├── components/     # Reusable components
@@ -80,7 +80,7 @@ PORT=5000
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd TechTO
+   cd finalinterview
    ```
 
 2. **Install server dependencies**
