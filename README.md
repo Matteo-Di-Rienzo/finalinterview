@@ -248,4 +248,4 @@ For support or questions:
 
 ---
 
-**TechTO** - Prepare Smarter. Interview Faster. With AI.
+**finalinterview** - Prepare Smarter. Interview Faster. With AI.
